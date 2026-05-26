@@ -3,6 +3,12 @@
 > 구조물의 front/top 이미지를 기반으로 안정성 확률을 예측한 Dual-View Vision Classification 실험
 
 <p align="center">
+  <a href="https://www.notion.so/364441f66d7881069338cc5170706fff?pvs=1">
+    <img src="https://img.shields.io/badge/Notion%20Competition%20Page-View%20Details-7C3AED?style=for-the-badge&logo=notion&logoColor=white" alt="Notion Competition Page" />
+  </a>
+</p>
+
+<p align="center">
   <img src="./assets/dacon-leaderboard.png" width="88%" alt="DACON 구조물 안정성 추론 리더보드 결과" />
 </p>
 
