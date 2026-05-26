@@ -1,37 +1,113 @@
-# 🏗️ Dacon 구조물 안정성 예측 프로젝트
+# DACON 구조물 안정성 추론
 
-이 프로젝트는 구조물 이미지에서 배경과 노이즈를 제거하고, 객체의 구조적 특징을 극대화하여 적재 상태의 안정성(Stable/Unstable)을 정밀하게 예측하는 파이프라인을 구축하는 것을 목표로 합니다.
+> 구조물의 front/top 이미지를 기반으로 안정성 확률을 예측한 Dual-View Vision Classification 실험
 
-## 📂 파일별 상세 설명
+<p align="center">
+  <img src="./assets/dacon-leaderboard.png" width="88%" alt="DACON 구조물 안정성 추론 리더보드 결과" />
+</p>
 
-### 1. `data_segmentation.ipynb` (Segmentation Research & Pipeline)
-* **목적**: 최적의 세그멘테이션 기법을 탐색하여 정교한 객체 마스크 생성.
-* **주요 실험 내용**:
-    * **SAM 2 + 전처리 필터**: Gamma Boost, Shadow Masking 등을 통한 조명 변화 대응 실험.
-    * **Depth-Anything-v2**: 깊이 정보를 활용한 객체 분리 기법 테스트.
-    * **HSV + SAM 2 Hybrid (최종 채택)**: 
-        * HSV 색공간 분석을 통해 물체의 위치(Smart Box)를 동적으로 파악.
-        * 탐지된 영역을 SAM 2의 프롬프트로 입력하여 배경과 그림자가 완벽히 제거된 마스크 획득.
-* **결론**: **HSV 스마트 박스 기반의 SAM 2 하이브리드 방식**이 가장 우수한 성능을 보여 최종 전처리 공정으로 결정.
+## ✨ Highlights
 
-### 2. `data_split.py`
-* **목적**: 데이터셋 경로 관리 및 학습/검증 데이터 분리 자동화 스크립트.
+| 구분 | 내용 |
+|---|---|
+| 대회 | DACON 구조물 안정성 추론 공모전 |
+| 성과 | 최종 16등 / 상위 4%, Private LogLoss 0.01903 |
+| 접근 | Segmentation 전처리 + Dual-View Classification |
+| 담당 | HSV Smart Box, SAM2 기반 전처리, ConvNeXt 실험, 후처리 전략 |
 
-### 3. `5_fold.ipynb` (Baseline Pipeline)
-* **목적**: 생성된 마스크를 활용한 4채널 기반의 안정성 예측 모델 베이스라인 구축.
-* **핵심 기능**:
-    * RGB(3ch) + Mask(1ch)를 결합한 4채널 입력 구조.
-    * Front/Top 뷰의 특징을 결합하는 `UltimateFusionNet` 설계.
-    * Train + Dev 데이터 통합 및 Stratified 5-Fold 교차 검증 적용.
+---
 
-### 4. `5_fold_v2.ipynb`
-* **목적**: 고해상도 이미지와 대형 백본 모델을 통한 성능 극대화.
-* **주요 사양**:
-    * **384x384** 고해상도 입력으로 미세한 구조적 특징 포착.
-    * **ConvNeXt-Base** (384px 사전 학습 버전) 백본 사용.
-    * 내부 검증(Val LogLoss) **0.0006** 대 달성.
+## 1. 프로젝트 개요
 
-## 🚀 주요 전략 및 결론
-* **Hybrid Segmentation**: 단순 모델 사용이 아닌 HSV 색상 분석과 SAM 2를 결합하여 전처리 정확도를 비약적으로 향상.
-* **Data Integration**: `dev` 데이터를 학습에 포함하고 이중 층화 추출을 적용하여 모델의 일반화 성능 확보.
-* **Resolution Scaling**: 224px에서 384px로의 상향이 구조물 안정성 판단에 결정적인 역할을 함을 확인.
+이 프로젝트는 구조물의 front / top 두 시점 이미지를 기반으로 적재 상태의 안정성을 예측하는 비전 분류 공모전 실험입니다.
+
+단순한 이미지 분류가 아니라 배경, 그림자, 시점 차이, 구조물의 기울기와 배치 정보를 함께 고려해야 했기 때문에, Segmentation 전처리와 Dual-View Classification 구조를 중심으로 실험했습니다.
+
+---
+
+## 2. 데이터 및 문제 구조
+
+<p align="center">
+  <img src="./assets/dacon-structure.png" width="88%" alt="DACON 구조물 안정성 데이터 구조" />
+</p>
+
+```text
+front image
+      +
+top image
+      ↓
+segmentation / preprocessing
+      ↓
+dual-view classification
+      ↓
+stable / unstable probability
+```
+
+---
+
+## 3. My Role
+
+- 데이터 전처리 및 Segmentation 파이프라인 설계
+- HSV Smart Box 기반 구조물 영역 추출 실험
+- SAM2를 활용한 객체 마스크 생성 실험
+- RGB + Mask 4채널 입력 구조 실험
+- ConvNeXt 기반 안정성 분류 모델 실험
+- TTA, Temperature Scaling, Prediction Clipping 등 LogLoss 개선 후처리 적용
+
+---
+
+## 4. Experiment Focus
+
+| 실험 | 목적 |
+|---|---|
+| HSV Smart Box | 색공간 기반으로 구조물 후보 영역 탐색 |
+| SAM2 Segmentation | 배경과 그림자를 제거한 객체 마스크 생성 |
+| Depth-Anything-v2 | 깊이 정보를 활용한 객체 분리 가능성 검토 |
+| RGB + Mask 4채널 입력 | 구조물 영역 정보를 분류 모델 입력에 직접 반영 |
+| Dual-View Fusion | front / top 시점 정보를 함께 사용 |
+| Calibration | LogLoss 기준에서 과도한 확신 완화 |
+
+---
+
+## 5. Pipeline
+
+```text
+Data Split
+  → Segmentation Research
+  → HSV Smart Box + SAM2 Mask Generation
+  → RGB + Mask Dataset 구성
+  → ConvNeXt / Swin 기반 분류 실험
+  → TTA / Temperature Scaling / Prediction Clipping
+  → Submission
+```
+
+---
+
+## 6. 주요 파일
+
+| 파일 | 설명 |
+|---|---|
+| `data_segmentation.ipynb` | Segmentation 연구 및 최종 전처리 파이프라인 |
+| `data_split.py` | 학습/검증 데이터 분리 자동화 |
+| `5_fold.ipynb` | RGB + Mask 4채널 baseline pipeline |
+| `5_fold_v2.ipynb` | 384px 고해상도 입력 및 ConvNeXt-Base 실험 |
+
+---
+
+## 7. Tech Stack
+
+| 영역 | 기술 |
+|---|---|
+| Language | Python |
+| Framework | PyTorch |
+| Backbone | ConvNeXt, Swin Transformer |
+| Segmentation | SAM2, HSV Smart Box, Depth-Anything-v2 |
+| Augmentation | Albumentations |
+| Validation | Stratified 5-Fold |
+| Post-processing | TTA, Temperature Scaling, Prediction Clipping |
+
+---
+
+## 8. Repository
+
+- [KDY0829/dacon-data-segmentation_and_train](https://github.com/KDY0829/dacon-data-segmentation_and_train)
